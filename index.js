@@ -161,6 +161,25 @@ function navigateTool(runtime) {
       },
       required: ['url'],
     },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          url: { type: 'string' },
+          title: { type: 'string' },
+          status: { type: 'integer' },
+        },
+      },
+      render: (_args, value) => [
+        {
+          type: 'text',
+          text: `Opened ${value?.url ?? '(unknown)'}${value?.title ? ` — "${value.title}"` : ''}${
+            value?.status === undefined ? '' : ` (HTTP ${value.status})`
+          }`,
+        },
+      ],
+    },
     async execute(args) {
       const url = typeof args?.url === 'string' ? args.url.trim() : '';
       if (url === '') throw new Error('browser_navigate: "url" must be a non-empty string.');
@@ -196,6 +215,14 @@ function evaluateTool(runtime) {
       },
       required: ['expression'],
     },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: { value: {} },
+      },
+      render: (_args, value) => [{ type: 'text', text: JSON.stringify(value?.value ?? null, null, 2) }],
+    },
     async execute(args) {
       const expression = typeof args?.expression === 'string' ? args.expression : '';
       if (expression.trim() === '') throw new Error('browser_evaluate: "expression" must be a non-empty string.');
@@ -226,6 +253,16 @@ function screenshotTool(runtime) {
         height: { type: 'integer', description: 'Viewport height to set before capturing.' },
       },
       required: [],
+    },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: { path: { type: 'string' }, bytes: { type: 'integer' } },
+      },
+      render: (_args, value) => [
+        { type: 'text', text: `Screenshot saved to ${value?.path ?? '(unknown)'} (${value?.bytes ?? 0} bytes)` },
+      ],
     },
     async execute(args, exec) {
       const page = await runtime.connect();
