@@ -99,6 +99,18 @@ function createRuntime(ctx, config) {
     ? config.sessionTimeoutSeconds
     : 300;
 
+  /**
+   * The project sessions belong to. Browserbase's docs list `projectId` on session
+   * creation; in practice a session also opens without it, so it is sent only when
+   * one is configured — via config.projectId or $BROWSERBASE_PROJECT_ID.
+   */
+  const configuredProjectId =
+    typeof config?.projectId === 'string' && config.projectId.trim()
+      ? config.projectId.trim()
+      : typeof process.env.BROWSERBASE_PROJECT_ID === 'string' && process.env.BROWSERBASE_PROJECT_ID.trim()
+        ? process.env.BROWSERBASE_PROJECT_ID.trim()
+        : undefined;
+
   function scheduleIdleClose() {
     if (idleCloseMs <= 0) return;
     clearTimeout(idleTimer);
@@ -122,7 +134,11 @@ function createRuntime(ctx, config) {
       const session = await browserbaseRequest('/sessions', {
         key,
         method: 'POST',
-        body: { timeout: sessionTimeoutSeconds, ...(config?.sessionOptions ?? {}) },
+        body: {
+          timeout: sessionTimeoutSeconds,
+          ...(configuredProjectId === undefined ? {} : { projectId: configuredProjectId }),
+          ...(config?.sessionOptions ?? {}),
+        },
       });
       const connectUrl = session?.connectUrl;
       if (typeof connectUrl !== 'string' || connectUrl === '') {
