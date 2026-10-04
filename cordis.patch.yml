@@ -5,7 +5,19 @@
 #   browserbase-provider — this package, which claims it
 # Nothing shipped is overridden.
 - insert:
+    # `./browser-use.js`, NOT the bare `@deepseek-ai/dsh-browser-use`.
+    #
+    # A row's `name` is imported by the Loader relative to the PROFILE's config
+    # file, so a bare specifier resolves only when the package is a dependency
+    # of the profile. The seam is a dependency of THIS bundle instead, so the
+    # bare form failed with ERR_MODULE_NOT_FOUND: the seam row never activated,
+    # nothing provided `browserUse`, and the provider below stayed PENDING
+    # (`pending (waiting for service: browserUse)`) forever.
+    #
+    # Inserted relative names are anchored beside this patch file
+    # (dsh-app-boot `anchorInsertedPluginNames`), so this resolves to a file://
+    # URL inside the bundle, whose own re-export finds the seam package.
     - id: browser-use
-      name: '@deepseek-ai/dsh-browser-use'
+      name: './browser-use.js'
     - id: browserbase-provider
       name: 'dsh-browserbase-provider'

@@ -1,17 +1,17 @@
 /**
  * dsh-browserbase-provider — Browserbase cloud browser as a DSH browser-use provider.
  *
- * STATUS: UNTESTED. Written from the seam's published contract
- * (`ctx.browserUse.register(name)` claims the single provider slot) and
- * Browserbase's documented REST API (`POST /v1/sessions` → `connectUrl`,
- * then anything that speaks CDP). It has never been loaded into a profile.
+ * Mounted from the seam's published contract (`ctx.browserUse.register(name)`
+ * claims the single provider slot) and Browserbase's documented REST API
+ * (`POST /v1/sessions` → `connectUrl`, then anything that speaks CDP).
  *
  * What it does:
  *   1. Claims the browser-use slot under the name `browserbase`.
  *   2. On the first tool call, creates a Browserbase session with the key and
  *      attaches playwright-core to it over CDP. The browser runs at Browserbase;
  *      nothing runs locally except the client connection.
- *   3. Exposes three tools: browser_navigate, browser_evaluate, browser_screenshot.
+ *   3. Exposes four tools: browser_navigate, browser_evaluate,
+ *      browser_screenshot, browser_close.
  *
  * Key resolution: plugin config, then DSH's credential store, then the environment.
  */
