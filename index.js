@@ -90,6 +90,8 @@ function createRuntime(ctx, config) {
   let page;
   let connecting;
   let idleTimer;
+  /** Set by close(). Only a caller that names a URL may start a fresh session. */
+  let closed = false;
 
   /** Seconds of no tool call after which the session is closed. 0 disables it. */
   const idleCloseMs = (Number.isInteger(config?.idleCloseSeconds) ? config.idleCloseSeconds : 60) * 1000;
@@ -120,10 +122,15 @@ function createRuntime(ctx, config) {
     idleTimer.unref?.();
   }
 
-  async function connect() {
+  async function connect(allowRestart = false) {
     if (page !== undefined) {
       scheduleIdleClose();
       return page;
+    }
+    if (closed && !allowRestart) {
+      throw new Error(
+        'browserbase: the session was closed. Call browser_navigate with a URL to open a new cloud browser session.',
+      );
     }
     if (connecting !== undefined) return connecting;
 
@@ -150,6 +157,7 @@ function createRuntime(ctx, config) {
       browser = await chromium.connectOverCDP(connectUrl);
       const context = browser.contexts()[0] ?? (await browser.newContext());
       page = context.pages()[0] ?? (await context.newPage());
+      closed = false;
       scheduleIdleClose();
       return page;
     })();
@@ -170,6 +178,7 @@ function createRuntime(ctx, config) {
     }
     browser = undefined;
     page = undefined;
+    closed = true;
   }
 
   return { connect, close };
@@ -222,7 +231,7 @@ function navigateTool(runtime) {
     async execute(args) {
       const url = typeof args?.url === 'string' ? args.url.trim() : '';
       if (url === '') throw new Error('browser_navigate: "url" must be a non-empty string.');
-      const page = await runtime.connect();
+      const page = await runtime.connect(true);
       const response = await page.goto(url, { waitUntil: args?.waitUntil ?? 'domcontentloaded' });
       return {
         url: page.url(),
