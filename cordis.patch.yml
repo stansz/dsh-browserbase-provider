@@ -1,8 +1,11 @@
 # Bundle patch for dsh-browserbase-provider.
 #
-# Two rows: the browser-use seam (owns the single provider slot) and this
-# provider, which claims it. Nothing shipped is overridden.
+# Two rows, both with an explicit id:
+#   browser-use          — the seam that owns the single provider slot
+#   browserbase-provider — this package, which claims it
+# Nothing shipped is overridden.
 - insert:
-    - name: '@deepseek-ai/dsh-browser-use'
+    - id: browser-use
+      name: '@deepseek-ai/dsh-browser-use'
     - id: browserbase-provider
       name: 'dsh-browserbase-provider'
