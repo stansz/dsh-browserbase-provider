@@ -89,9 +89,30 @@ function createRuntime(ctx, config) {
   let browser;
   let page;
   let connecting;
+  let idleTimer;
+
+  /** Seconds of no tool call after which the session is closed. 0 disables it. */
+  const idleCloseMs = (Number.isInteger(config?.idleCloseSeconds) ? config.idleCloseSeconds : 60) * 1000;
+
+  /** Browserbase ends the session on its own after this many seconds. */
+  const sessionTimeoutSeconds = Number.isInteger(config?.sessionTimeoutSeconds)
+    ? config.sessionTimeoutSeconds
+    : 300;
+
+  function scheduleIdleClose() {
+    if (idleCloseMs <= 0) return;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      void close();
+    }, idleCloseMs);
+    idleTimer.unref?.();
+  }
 
   async function connect() {
-    if (page !== undefined) return page;
+    if (page !== undefined) {
+      scheduleIdleClose();
+      return page;
+    }
     if (connecting !== undefined) return connecting;
 
     connecting = (async () => {
@@ -101,7 +122,7 @@ function createRuntime(ctx, config) {
       const session = await browserbaseRequest('/sessions', {
         key,
         method: 'POST',
-        body: config?.sessionOptions ?? {},
+        body: { timeout: sessionTimeoutSeconds, ...(config?.sessionOptions ?? {}) },
       });
       const connectUrl = session?.connectUrl;
       if (typeof connectUrl !== 'string' || connectUrl === '') {
@@ -113,6 +134,7 @@ function createRuntime(ctx, config) {
       browser = await chromium.connectOverCDP(connectUrl);
       const context = browser.contexts()[0] ?? (await browser.newContext());
       page = context.pages()[0] ?? (await context.newPage());
+      scheduleIdleClose();
       return page;
     })();
 
@@ -124,6 +146,7 @@ function createRuntime(ctx, config) {
   }
 
   async function close() {
+    clearTimeout(idleTimer);
     try {
       if (browser !== undefined) await browser.close();
     } catch {
@@ -287,6 +310,29 @@ function screenshotTool(runtime) {
   };
 }
 
+/** Close the cloud browser now, so a metered session stops burning minutes. */
+function closeTool(runtime) {
+  return {
+    name: 'browser_close',
+    description:
+      'Close the Browserbase cloud browser session immediately, ending its billing. Call this as soon as you are done ' +
+      'with the page. A session also closes on its own after an idle period with no tool calls.',
+    parameters: { type: 'object', additionalProperties: false, properties: {} },
+    output: {
+      schema: { type: 'object', additionalProperties: false, properties: { closed: { type: 'boolean' } } },
+      render: () => [{ type: 'text', text: 'Browserbase session closed.' }],
+    },
+    async execute() {
+      await runtime.close();
+      return { closed: true };
+    },
+    isConcurrencySafe() {
+      return true;
+    },
+    timeoutMs: 30000,
+  };
+}
+
 /**
  * Claim the browser-use slot and register this provider's tools.
  *
@@ -304,6 +350,7 @@ export function apply(ctx, config) {
   ctx.effect(() => ctx.tools.register(navigateTool(runtime)), 'browser_navigate tool registration');
   ctx.effect(() => ctx.tools.register(evaluateTool(runtime)), 'browser_evaluate tool registration');
   ctx.effect(() => ctx.tools.register(screenshotTool(runtime)), 'browser_screenshot tool registration');
+  ctx.effect(() => ctx.tools.register(closeTool(runtime)), 'browser_close tool registration');
 
   ctx.effect(() => () => runtime.close(), 'browserbase runtime teardown');
 }
