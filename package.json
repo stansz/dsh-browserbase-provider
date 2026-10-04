@@ -1,0 +1,23 @@
+{
+  "name": "dsh-browserbase-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Browserbase cloud browser as a DSH browser-use provider. UNTESTED.",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "@deepseek-ai/dsh-browser-use": "0.2.0-rc.2",
+    "playwright-core": "^1.63.0"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
