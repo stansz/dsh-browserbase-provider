@@ -5,6 +5,26 @@
   "type": "module",
   "description": "Browserbase cloud browser as a DSH browser-use provider.",
   "license": "MIT",
+  "author": "stansz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stansz/dsh-browserbase-provider.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stansz/dsh-browserbase-provider/issues"
+  },
+  "homepage": "https://github.com/stansz/dsh-browserbase-provider#readme",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "browserbase",
+    "browser-use",
+    "playwright",
+    "cordis"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "index.js",
   "dependencies": {
     "@deepseek-ai/dsh-browser-use": "0.2.0-rc.2",
@@ -14,7 +34,8 @@
     "index.js",
     "browser-use.js",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {

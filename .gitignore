@@ -1,3 +1,12 @@
 node_modules/
 .DS_Store
 *.log
+
+# Never commit credentials. API keys belong in DSH's credential store
+# (~/.dsh/.credentials.yaml) or the launch environment.
+.env
+.env.*
+!.env.example
+
+# Default screenshot path of the browser_screenshot tool
+browserbase-screenshot.png
