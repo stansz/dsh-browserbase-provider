@@ -39,13 +39,19 @@ There is no settings page; configure the `browserbase-provider` row in the profi
 - id: browserbase-provider
   name: dsh-browserbase-provider
   config:
-    # all fields are optional
+    # Every field here is optional; the row loads without any config. An API key
+    # is still required to open a session — it just resolves from the credential
+    # store or the environment by default (see "API key handling" below).
     apiKeyRef: BROWSERBASE_API_KEY   # credential reference to read the key from
     projectId: <browserbase-project-id>
     idleCloseSeconds: 60             # close a session after this long with no tool call (0 disables)
     sessionTimeoutSeconds: 300       # Browserbase-side session timeout
     sessionOptions: {}               # extra fields merged into POST /v1/sessions
 ```
+
+An API key is always required to create a session, but only one of the three sources listed under **API key
+handling** needs to provide it — a row with no `config` block at all is valid when the key lives in the credential
+store (the usual setup).
 
 An id-targeted patch replaces the whole matched config, not a deep merge — restate any field you keep.
 
